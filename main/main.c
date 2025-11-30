@@ -145,8 +145,7 @@ void app_main(void)
 {
     esp_err_t ret;
 
-    // WiFi配网功能（已注释）
-    // printf("esp32 网页WiFi配网 By.星年\n");
+    printf("esp32 网页WiFi配网 By.星年\n");
 
     ret = lottie_app_init();
     if (ret != ESP_OK) {
