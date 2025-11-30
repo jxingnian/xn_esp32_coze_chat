@@ -4,7 +4,7 @@ idf_component_register(
     INCLUDE_DIRS
         "include"
     REQUIRES
-        audio_manager
+        xn_audio_manager
         spiffs
 )
 
