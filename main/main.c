@@ -2,8 +2,8 @@
  * @Author: 星年 jixingnian@gmail.com
  * @Date: 2025-11-22 13:43:50
  * @LastEditors: xingnian jixingnian@gmail.com
- * @LastEditTime: 2025-11-29 14:46:53
- * @FilePath: \xn_esp32_coze_manager\main\main.c
+ * @LastEditTime: 2025-11-30 12:52:23
+ * @FilePath: \xn_esp32_coze_chat\main\main.c
  * @Description: esp32 网页WiFi配网 By.星年
  */
 
@@ -20,6 +20,7 @@
 #include "coze_chat.h"
 #include "coze_chat_app.h"
 #include "audio_app/audio_config_app.h"
+#include "lottie_app/lottie_app.h"
 
 static const char *TAG = "app";
 
@@ -35,6 +36,7 @@ static void app_wifi_event_cb(wifi_manage_state_t state)
             ESP_LOGI(TAG, "WiFi connected, init Coze chat");
             if (coze_chat_app_init() == ESP_OK) {
                 s_coze_started = true;
+                lottie_app_show_mic_idle();
             } else {
                 ESP_LOGE(TAG, "Coze chat init failed on WiFi connect");
             }
@@ -48,6 +50,7 @@ static void app_wifi_event_cb(wifi_manage_state_t state)
             coze_chat_app_deinit();
             s_coze_started = false;
         }
+        lottie_app_show_wifi_connecting();
         break;
 
     default:
@@ -140,11 +143,21 @@ static void audio_event_cb(const audio_mgr_event_t *event, void *user_ctx)
  */
 void app_main(void)
 {
+    esp_err_t ret;
+
     // WiFi配网功能（已注释）
     // printf("esp32 网页WiFi配网 By.星年\n");
+
+    ret = lottie_app_init();
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "lottie_app_init failed: %s", esp_err_to_name(ret));
+    } else {
+        lottie_app_show_wifi_connecting();
+    }
+
     wifi_manage_config_t wifi_cfg = WIFI_MANAGE_DEFAULT_CONFIG();
     wifi_cfg.wifi_event_cb = app_wifi_event_cb;
-    esp_err_t ret = wifi_manage_init(&wifi_cfg);
+    ret = wifi_manage_init(&wifi_cfg);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "wifi_manage_init failed: %s", esp_err_to_name(ret));
     }
