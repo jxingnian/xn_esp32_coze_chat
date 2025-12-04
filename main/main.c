@@ -2,7 +2,7 @@
  * @Author: 星年 jixingnian@gmail.com
  * @Date: 2025-11-22 13:43:50
  * @LastEditors: xingnian jixingnian@gmail.com
- * @LastEditTime: 2025-12-04 19:08:30
+ * @LastEditTime: 2025-12-04 19:11:59
  * @FilePath: \xn_esp32_coze_chat\main\main.c
  * @Description: esp32 网页WiFi配网 By.星年
  */
@@ -112,14 +112,33 @@ static void audio_event_cb(const audio_mgr_event_t *event, void *user_ctx)
     }
 
     switch (event->type) {
-    case AUDIO_MGR_EVENT_WAKEUP_DETECTED:
+    case AUDIO_MGR_EVENT_WAKEUP_DETECTED: {
         // 唤醒词检测成功，播放唤醒音效 + mic 动画
         ESP_LOGI(TAG, "🎤 唤醒词检测: 索引=%d, 音量=%.1f dB",
                  event->data.wakeup.wake_word_index,
                  event->data.wakeup.volume_db);
+        
+        // ✅ 打断功能：如果正在播放，停止播放并清空缓冲区
+        if (audio_manager_is_playing()) {
+            ESP_LOGI(TAG, "⏸️ 检测到唤醒，打断当前播放");
+            audio_manager_stop_playback();
+            audio_manager_clear_playback_buffer();
+            
+            // 取消当前 Coze 对话
+            coze_chat_handle_t handle = coze_chat_get_handle();
+            if (handle) {
+                coze_chat_send_audio_cancel(handle);
+            }
+        }
+        
+        // 播放唤醒音效和动画
         audio_prompt_play(AUDIO_PROMPT_WAKEUP);
         lottie_app_show_mic_idle();
+        
+        // 重新启动播放任务（准备接收新的回复）
+        audio_manager_start_playback();
         break;
+    }
 
     case AUDIO_MGR_EVENT_VAD_START:
         // VAD检测到语音开始
@@ -148,11 +167,29 @@ static void audio_event_cb(const audio_mgr_event_t *event, void *user_ctx)
         break;
     }
 
-    case AUDIO_MGR_EVENT_BUTTON_TRIGGER:
+    case AUDIO_MGR_EVENT_BUTTON_TRIGGER: {
         // 按键触发录音，播放 mic 动画
         ESP_LOGI(TAG, "button trigger, force capture");
+        
+        // ✅ 打断功能：如果正在播放，停止播放并清空缓冲区
+        if (audio_manager_is_playing()) {
+            ESP_LOGI(TAG, "⏸️ 检测到按键，打断当前播放");
+            audio_manager_stop_playback();
+            audio_manager_clear_playback_buffer();
+            
+            // 取消当前 Coze 对话
+            coze_chat_handle_t handle = coze_chat_get_handle();
+            if (handle) {
+                coze_chat_send_audio_cancel(handle);
+            }
+        }
+        
         lottie_app_show_mic_idle();
+        
+        // 重新启动播放任务（准备接收新的回复）
+        audio_manager_start_playback();
         break;
+    }
 
     default:
         break;
