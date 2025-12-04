@@ -2,7 +2,7 @@
  * @Author: 星年 jixingnian@gmail.com
  * @Date: 2025-11-22 13:43:50
  * @LastEditors: xingnian jixingnian@gmail.com
- * @LastEditTime: 2025-12-04 18:46:15
+ * @LastEditTime: 2025-12-04 18:59:13
  * @FilePath: \xn_esp32_coze_chat\main\main.c
  * @Description: esp32 网页WiFi配网 By.星年
  */
@@ -17,6 +17,7 @@
 #include "esp_err.h"
 #include "xn_wifi_manage.h"
 #include "audio_manager.h"
+#include "audio_prompt.h"
 #include "coze_chat.h"
 #include "coze_chat_app.h"
 #include "audio_app/audio_config_app.h"
@@ -36,7 +37,8 @@ static void app_wifi_event_cb(wifi_manage_state_t state)
             ESP_LOGI(TAG, "WiFi connected, init Coze chat");
             if (coze_chat_app_init() == ESP_OK) {
                 s_coze_started = true;
-                lottie_app_show_mic_idle();
+                // WiFi 连接成功后显示 cool 动画（待机状态）
+                lottie_app_show_cool();
             } else {
                 ESP_LOGE(TAG, "Coze chat init failed on WiFi connect");
             }
@@ -110,6 +112,15 @@ static void audio_event_cb(const audio_mgr_event_t *event, void *user_ctx)
     }
 
     switch (event->type) {
+    case AUDIO_MGR_EVENT_WAKEUP_DETECTED:
+        // 唤醒词检测成功，播放唤醒音效 + mic 动画
+        ESP_LOGI(TAG, "🎤 唤醒词检测: 索引=%d, 音量=%.1f dB",
+                 event->data.wakeup.wake_word_index,
+                 event->data.wakeup.volume_db);
+        audio_prompt_play(AUDIO_PROMPT_WAKEUP);
+        lottie_app_show_mic_idle();
+        break;
+
     case AUDIO_MGR_EVENT_VAD_START:
         // VAD检测到语音开始
         ESP_LOGI(TAG, "VAD start, begin capture");
@@ -132,12 +143,15 @@ static void audio_event_cb(const audio_mgr_event_t *event, void *user_ctx)
         if (handle) {
             coze_chat_send_audio_cancel(handle);
         }
+        // 超时后显示 cool 动画（回到待机状态）
+        lottie_app_show_cool();
         break;
     }
 
     case AUDIO_MGR_EVENT_BUTTON_TRIGGER:
-        // 按键触发录音
+        // 按键触发录音，播放 mic 动画
         ESP_LOGI(TAG, "button trigger, force capture");
+        lottie_app_show_mic_idle();
         break;
 
     default:
@@ -168,6 +182,13 @@ void app_main(void)
     ret = wifi_manage_init(&wifi_cfg);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "wifi_manage_init failed: %s", esp_err_to_name(ret));
+    }
+    
+    // 初始化音频提示模块（音效播放）
+    ESP_LOGI(TAG, "init audio prompt");
+    ret = audio_prompt_init();
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "audio_prompt_init failed: %s", esp_err_to_name(ret));
     }
     
     // 构建音频管理器配置

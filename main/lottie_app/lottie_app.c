@@ -84,6 +84,14 @@ void lottie_app_show_thinking(void)
     lottie_manager_play_anim(LOTTIE_ANIM_THINK);
 }
 
+void lottie_app_show_cool(void)
+{
+    if (!lottie_app_is_ready()) {
+        return;
+    }
+    lottie_manager_play_anim(LOTTIE_ANIM_COOL);
+}
+
 void lottie_app_show_loading(void)
 {
     if (!lottie_app_is_ready()) {

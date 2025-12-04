@@ -42,6 +42,11 @@ void lottie_app_show_speaking(void);
 void lottie_app_show_thinking(void);
 
 /**
+ * @brief 显示「酷」动画（待机状态）
+ */
+void lottie_app_show_cool(void);
+
+/**
  * @brief 显示通用加载动画
  */
 void lottie_app_show_loading(void);
