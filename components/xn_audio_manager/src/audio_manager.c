@@ -75,6 +75,7 @@ typedef struct {
     audio_mgr_state_t state;                ///< 状态机
     bool wake_active;                       ///< 是否处于唤醒窗口
     TickType_t wake_deadline_tick;          ///< 唤醒超时tick
+    TickType_t vad_grace_period_tick;       ///< VAD 宽限期结束时间（唤醒后忽略 VAD_END）
     
     // 回调
     audio_record_callback_t record_callback; ///< 录音数据回调函数
@@ -292,6 +293,8 @@ static void audio_manager_handle_internal_event(const audio_mgr_internal_msg_t *
         audio_manager_notify_event(&evt);
         s_ctx.recording = true;
         audio_manager_arm_wake_timer(s_ctx.config.wakeup_config.wakeup_timeout_ms);
+        // 设置 VAD 宽限期：按键后 2 秒内忽略 VAD_END
+        s_ctx.vad_grace_period_tick = xTaskGetTickCount() + pdMS_TO_TICKS(2000);
         audio_manager_refresh_state();
         break;
 
@@ -307,6 +310,8 @@ static void audio_manager_handle_internal_event(const audio_mgr_internal_msg_t *
         audio_manager_notify_event(&evt);
         s_ctx.recording = true;
         audio_manager_arm_wake_timer(s_ctx.config.wakeup_config.wakeup_timeout_ms);
+        // 设置 VAD 宽限期：唤醒后 2 秒内忽略 VAD_END，给用户时间开始说话
+        s_ctx.vad_grace_period_tick = xTaskGetTickCount() + pdMS_TO_TICKS(2000);
         audio_manager_refresh_state();
         break;
 
@@ -324,6 +329,14 @@ static void audio_manager_handle_internal_event(const audio_mgr_internal_msg_t *
     case AUDIO_INT_EVT_VAD_END:
         // ⚠️ VAD 只在唤醒窗口内有效
         if (s_ctx.wake_active) {
+            // 检查是否在 VAD 宽限期内（唤醒后 2 秒内忽略 VAD_END）
+            TickType_t now = xTaskGetTickCount();
+            if ((int32_t)(now - s_ctx.vad_grace_period_tick) < 0) {
+                ESP_LOGD(TAG, "VAD_END 在宽限期内，忽略（还剩 %d ms）",
+                         (int)((s_ctx.vad_grace_period_tick - now) * portTICK_PERIOD_MS));
+                break;  // 忽略此 VAD_END 事件
+            }
+            
             evt.type = AUDIO_MGR_EVENT_VAD_END;
             audio_manager_notify_event(&evt);
             s_ctx.recording = false;

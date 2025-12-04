@@ -2,7 +2,7 @@
  * @Author: 星年 jixingnian@gmail.com
  * @Date: 2025-11-22 13:43:50
  * @LastEditors: xingnian jixingnian@gmail.com
- * @LastEditTime: 2025-12-04 19:03:19
+ * @LastEditTime: 2025-12-04 19:08:30
  * @FilePath: \xn_esp32_coze_chat\main\main.c
  * @Description: esp32 网页WiFi配网 By.星年
  */
