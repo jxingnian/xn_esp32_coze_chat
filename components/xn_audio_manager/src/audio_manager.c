@@ -340,7 +340,9 @@ static void audio_manager_handle_internal_event(const audio_mgr_internal_msg_t *
             evt.type = AUDIO_MGR_EVENT_VAD_END;
             audio_manager_notify_event(&evt);
             s_ctx.recording = false;
-            audio_manager_arm_wake_timer(s_ctx.config.wakeup_config.wakeup_end_delay_ms);
+            // ✅ VAD 结束后清除唤醒超时，等待 Coze 回复
+            // 不再设置短超时，让 Coze 有足够时间处理和回复
+            audio_manager_clear_wake_timer();
             audio_manager_refresh_state();
         }
         break;
