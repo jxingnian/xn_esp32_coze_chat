@@ -1,9 +1,9 @@
 /*
  * @Author: 星年 && jixingnian@gmail.com
  * @Date: 2025-11-27 19:17:04
- * @LastEditors: xingnian j_xingnian@163.com
- * @LastEditTime: 2025-11-28 19:36:06
- * @FilePath: \xn_esp32_audio\components\audio_manager\src\audio_manager.c
+ * @LastEditors: xingnian jixingnian@gmail.com
+ * @LastEditTime: 2025-12-04 19:37:06
+ * @FilePath: \xn_esp32_coze_chat\components\xn_audio_manager\src\audio_manager.c
  * @Description: 音频管理器实现 - 模块化架构
  * 
  * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved. 
@@ -320,7 +320,8 @@ static void audio_manager_handle_internal_event(const audio_mgr_internal_msg_t *
         if (s_ctx.wake_active) {
             evt.type = AUDIO_MGR_EVENT_VAD_START;
             audio_manager_notify_event(&evt);
-            s_ctx.recording = true;
+            // ✅ 唤醒后已经在录音，VAD_START 只是通知事件，不改变录音状态
+            // s_ctx.recording = true;  // 已经在唤醒时设置了
             audio_manager_arm_wake_timer(s_ctx.config.wakeup_config.wakeup_timeout_ms);
             audio_manager_refresh_state();
         }
