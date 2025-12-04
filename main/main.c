@@ -2,7 +2,7 @@
  * @Author: 星年 jixingnian@gmail.com
  * @Date: 2025-11-22 13:43:50
  * @LastEditors: xingnian jixingnian@gmail.com
- * @LastEditTime: 2025-11-30 12:52:23
+ * @LastEditTime: 2025-12-04 18:46:15
  * @FilePath: \xn_esp32_coze_chat\main\main.c
  * @Description: esp32 网页WiFi配网 By.星年
  */
@@ -61,6 +61,9 @@ static void app_wifi_event_cb(wifi_manage_state_t state)
 /**
  * @brief 录音数据回调函数
  * 
+ * ⚠️ 注意：只有在录音状态下才上传音频到 Coze
+ * 录音状态由唤醒词、按键或 VAD 触发
+ * 
  * @param pcm_data 采集到的PCM数据指针（16位有符号整数）
  * @param sample_count PCM数据采样点数
  * @param user_ctx 用户上下文指针（指向loopback_ctx_t）
@@ -70,6 +73,12 @@ static void loopback_record_cb(const int16_t *pcm_data,
                                void *user_ctx)
 {
     (void)user_ctx;
+
+    // ✅ 关键修复：只有在录音状态下才上传音频
+    // 录音状态由 audio_manager 根据唤醒词/按键/VAD 事件控制
+    if (!audio_manager_is_recording()) {
+        return;
+    }
 
     coze_chat_handle_t handle = coze_chat_get_handle();
     if (!handle || !pcm_data || sample_count == 0) {

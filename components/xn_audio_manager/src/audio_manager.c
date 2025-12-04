@@ -311,19 +311,25 @@ static void audio_manager_handle_internal_event(const audio_mgr_internal_msg_t *
         break;
 
     case AUDIO_INT_EVT_VAD_START:
-        evt.type = AUDIO_MGR_EVENT_VAD_START;
-        audio_manager_notify_event(&evt);
-        s_ctx.recording = true;
-        audio_manager_arm_wake_timer(s_ctx.config.wakeup_config.wakeup_timeout_ms);
-        audio_manager_refresh_state();
+        // ⚠️ VAD 不能触发唤醒！只有在唤醒窗口内才处理 VAD 事件
+        if (s_ctx.wake_active) {
+            evt.type = AUDIO_MGR_EVENT_VAD_START;
+            audio_manager_notify_event(&evt);
+            s_ctx.recording = true;
+            audio_manager_arm_wake_timer(s_ctx.config.wakeup_config.wakeup_timeout_ms);
+            audio_manager_refresh_state();
+        }
         break;
 
     case AUDIO_INT_EVT_VAD_END:
-        evt.type = AUDIO_MGR_EVENT_VAD_END;
-        audio_manager_notify_event(&evt);
-        s_ctx.recording = false;
-        audio_manager_arm_wake_timer(s_ctx.config.wakeup_config.wakeup_end_delay_ms);
-        audio_manager_refresh_state();
+        // ⚠️ VAD 只在唤醒窗口内有效
+        if (s_ctx.wake_active) {
+            evt.type = AUDIO_MGR_EVENT_VAD_END;
+            audio_manager_notify_event(&evt);
+            s_ctx.recording = false;
+            audio_manager_arm_wake_timer(s_ctx.config.wakeup_config.wakeup_end_delay_ms);
+            audio_manager_refresh_state();
+        }
         break;
 
     case AUDIO_INT_EVT_WAKE_TIMEOUT:
