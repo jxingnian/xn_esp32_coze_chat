@@ -136,7 +136,9 @@ static void audio_uplink_task(void *arg)
             bool success = uplink->config.send_callback(json_str, uplink->config.send_callback_ctx);
             
             if (!success) {
-                ESP_LOGW(TAG, "⚠️ 音频包 #%lu 发送失败", packet_count);
+                ESP_LOGW(TAG, "⚠️ 音频包 #%lu 发送失败 (可能网络拥塞)", packet_count);
+                // 发送失败时短暂延迟,避免继续积压
+                vTaskDelay(pdMS_TO_TICKS(10));
             }
             // 每100包打印一次统计
             else if (packet_count % 100 == 0) {

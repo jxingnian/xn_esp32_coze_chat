@@ -93,10 +93,12 @@ bool CozeWebSocket::Send(const std::string& message)
         return false;
     }
     
+    // ⚠️ 使用100ms超时,避免无限阻塞导致任务卡死
+    // 如果TCP缓冲区满,超时后返回失败,让上层丢弃音频包
     int ret = esp_websocket_client_send_text(client_, message.c_str(), 
-                                             message.length(), portMAX_DELAY);
+                                             message.length(), pdMS_TO_TICKS(100));
     if (ret < 0) {
-        ESP_LOGE(TAG, "发送消息失败");
+        ESP_LOGW(TAG, "发送消息超时或失败 (可能网络拥塞)");
         return false;
     }
     

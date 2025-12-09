@@ -30,7 +30,7 @@ static const char *TAG = "COZE_CHAT_APP";
 #endif
 
 #ifndef CONFIG_COZE_ACCESS_TOKEN
-#define CONFIG_COZE_ACCESS_TOKEN "sat_EnWEk9OwkxmQ4flAO3hAB6Np8O9Ilhz2uJ3cmteoM1GMjZjQobRFSgo7mGX0pEpO"
+#define CONFIG_COZE_ACCESS_TOKEN "pat_1SL6aocI3tT6kNbtSwvrfnRLhRBVgp84QzLShAuw239adPlCtQLVGd2rWWIHLLE0"
 #endif
 
 // 全局Coze句柄
